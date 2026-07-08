@@ -1,0 +1,16 @@
+{
+  "name": "xrpl-arb-bot",
+  "version": "3.0.0",
+  "description": "Bot d'arbitrage atomique XRP Ledger avec dashboard, persistance et gestion complète des erreurs (production-ready)",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "setup-testnet": "node setup-testnet-tokens.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "xrpl": "^5.0.0"
+  }
+}

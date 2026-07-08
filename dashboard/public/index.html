@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Bot d'arbitrage XRPL — Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #161925;
+    --border: #262b3d;
+    --text: #e6e8ef;
+    --muted: #8b90a6;
+    --green: #3ddc97;
+    --red: #ff6b6b;
+    --amber: #f5b942;
+    --blue: #5b8cff;
+    --purple: #b084ff;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+  }
+
+  h1 {
+    font-size: 20px;
+    margin: 0 0 4px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .grid.two {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid.three {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    min-width: 0;
+  }
+
+  .card .label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .card .value {
+    font-size: 24px;
+    font-weight: 600;
+    margin-top: 6px;
+    word-break: break-word;
+  }
+
+  .value.small {
+    font-size: 16px;
+  }
+
+  .value.green {
+    color: var(--green);
+  }
+
+  .value.red {
+    color: var(--red);
+  }
+
+  .value.amber {
+    color: var(--amber);
+  }
+
+  .value.blue {
+    color: var(--blue);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .badge.dry {
+    background: rgba(245, 185, 66, 0.15);
+    color: var(--amber);
+  }
+
+  .badge.live {
+    background: rgba(255, 107, 107, 0.15);
+    color: var(--red);
+  }
+
+  .badge.ok {
+    background: rgba(61, 220, 151, 0.15);
+    color: var(--green);
+  }
+
+  .badge.info {
+    background: rgba(91, 140, 255, 0.15);
+    color: var(--blue);
+  }
+
+  .badge.debug {
+    background: rgba(176, 132, 255, 0.15);
+    color: var(--purple);
+  }
+
+  section {
+    margin-bottom: 28px;
+  }
+
+  section h2 {
+    font-size: 15px;
+    margin-bottom: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  th {
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px 16px;
+    max-height: 360px;
+    overflow-y: auto;
+  }
+
+  .panel.tall {
+    max-height: 520px;
+  }
+
+  .log-line {
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .log-line.ERROR {
+    color: var(--red);
+  }
+
+  .log-line.WARN {
+    color: var(--amber);
+  }
+
+  .log-line.TRADE {
+    color: var(--blue);
+  }
+
+  .log-line.INFO {
+    color: var(--text);
+  }
+
+  .log-line.DEBUG {
+    color: var(--purple);
+  }
+
+  .empty {
+    color: var(--muted);
+    font-size: 13px;
+    padding: 16px 0;
+  }
+
+  .muted {
+    color: var(--muted);
+  }
+
+  .mono {
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 12px;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .toolbar input,
+  .toolbar select,
+  .toolbar button {
+    background: #0f1117;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+
+  .toolbar button {
+    cursor: pointer;
+  }
+
+  .toolbar button:hover {
+    border-color: var(--blue);
+  }
+
+  .path {
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 12px;
+    color: var(--blue);
+    word-break: break-word;
+  }
+
+  .danger-box {
+    border: 1px solid rgba(255, 107, 107, 0.35);
+    background: rgba(255, 107, 107, 0.08);
+    color: var(--red);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    font-size: 13px;
+  }
+
+  .ok-box {
+    border: 1px solid rgba(61, 220, 151, 0.35);
+    background: rgba(61, 220, 151, 0.08);
+    color: var(--green);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    font-size: 13px;
+  }
+
+  @media (max-width: 1100px) {
+    .grid,
+    .grid.three,
+    .grid.two {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 700px) {
+    body {
+      padding: 14px;
+    }
+
+    .grid,
+    .grid.three,
+    .grid.two {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+  <h1>🤖 Bot d'arbitrage XRPL</h1>
+  <div class="subtitle" id="subtitle">Chargement...</div>
+
+  <div id="modeWarning"></div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">Mode</div>
+      <div class="value" id="mode">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Solde total du wallet</div>
+      <div class="value" id="totalBalance">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Disponible pour trading</div>
+      <div class="value" id="availableBalance">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">PnL total</div>
+      <div class="value" id="totalPnl">—</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">PnL du jour</div>
+      <div class="value" id="dailyPnl">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Trades exécutés</div>
+      <div class="value" id="tradesExecuted">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Tokens surveillés</div>
+      <div class="value blue" id="watchlistCount">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Dernier scan</div>
+      <div class="value small" id="lastScanAge">—</div>
+    </div>
+  </div>
+
+  <div class="subtitle" id="balanceExplainer" style="margin-top:-8px; margin-bottom:20px;"></div>
+
+  <section>
+    <h2>Dernier scan</h2>
+    <div class="panel" id="lastScan">
+      <div class="empty">En attente de données...</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Watchlist active</h2>
+    <div class="toolbar">
+      <input id="watchlistFilter" placeholder="Filtrer token / issuer..." oninput="renderLastState()" />
+      <button onclick="copyWatchlist()">Copier watchlist</button>
+    </div>
+    <div class="panel tall">
+      <table id="watchlistTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Token</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="2" class="empty">Aucune watchlist chargée.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Historique des trades</h2>
+    <div class="panel">
+      <table id="tradeTable">
+        <thead>
+          <tr>
+            <th>Horodatage</th>
+            <th>Résultat</th>
+            <th>PnL (XRP)</th>
+            <th>Hash</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="4" class="empty">Aucun trade encore.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Journal en direct</h2>
+    <div class="toolbar">
+      <select id="logLevelFilter" onchange="renderLastState()">
+        <option value="ALL">Tous les niveaux</option>
+        <option value="ERROR">ERROR</option>
+        <option value="WARN">WARN</option>
+        <option value="TRADE">TRADE</option>
+        <option value="INFO">INFO</option>
+        <option value="DEBUG">DEBUG</option>
+      </select>
+
+      <input id="logTextFilter" placeholder="Filtrer les logs..." oninput="renderLastState()" />
+
+      <button onclick="copyLogs()">Copier logs visibles</button>
+    </div>
+
+    <div class="panel tall" id="logPanel">
+      <div class="empty">En attente de logs...</div>
+    </div>
+  </section>
+
+  <script>
+    let lastState = null;
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function safeFixed(value, digits = 4) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n.toFixed(digits) : "—";
+    }
+
+    function shortText(value, max = 80) {
+      const text = String(value ?? "");
+      return text.length > max ? text.slice(0, max) + "…" : text;
+    }
+
+    function formatAge(timestamp) {
+      if (!timestamp) return "—";
+
+      const t = new Date(timestamp).getTime();
+      if (!Number.isFinite(t)) return "—";
+
+      const diffMs = Date.now() - t;
+      if (diffMs < 0) return "à l'instant";
+
+      const sec = Math.floor(diffMs / 1000);
+      if (sec < 60) return `${sec}s`;
+
+      const min = Math.floor(sec / 60);
+      if (min < 60) return `${min}m ${sec % 60}s`;
+
+      const h = Math.floor(min / 60);
+      return `${h}h ${min % 60}m`;
+    }
+
+    function stringifyMeta(meta) {
+      if (!meta) return "";
+
+      try {
+        return JSON.stringify(meta);
+      } catch (_) {
+        return String(meta);
+      }
+    }
+
+    async function refresh() {
+      try {
+        const res = await fetch("/api/state", { cache: "no-store" });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const state = await res.json();
+        lastState = state;
+        render(state);
+      } catch (err) {
+        document.getElementById("subtitle").textContent =
+          "Impossible de contacter le bot: " + err.message;
+      }
+    }
+
+    function renderLastState() {
+      if (lastState) render(lastState);
+    }
+
+    function render(state) {
+      renderHeader(state);
+      renderBalances(state);
+      renderLastScan(state);
+      renderWatchlist(state);
+      renderTrades(state);
+      renderLogs(state);
+    }
+
+    function renderHeader(state) {
+      document.getElementById("subtitle").textContent =
+        `Réseau: ${state.network || "—"} · ` +
+        `Wallet: ${state.walletAddress || "—"} · ` +
+        `Max/trade: ${state.maxTradeXrp ?? "—"} XRP · ` +
+        `Seuil profit: ${state.minProfitPct ?? "—"}%`;
+
+      const modeEl = document.getElementById("mode");
+
+      if (state.dryRun) {
+        modeEl.innerHTML = '<span class="badge dry">SIMULATION</span>';
+        document.getElementById("modeWarning").innerHTML =
+          '<div class="ok-box">Mode simulation actif : aucune transaction réelle ne sera envoyée.</div>';
+      } else {
+        modeEl.innerHTML = '<span class="badge live">RÉEL</span>';
+        document.getElementById("modeWarning").innerHTML =
+          '<div class="danger-box"><strong>Attention :</strong> mode réel actif. Le bot peut envoyer de vraies transactions si une opportunité est validée.</div>';
+      }
+
+      const wl = Array.isArray(state.watchlist) ? state.watchlist : [];
+      document.getElementById("watchlistCount").textContent =
+        wl.length > 0 ? `${Math.max(0, wl.length - 1)} + XRP` : "—";
+
+      document.getElementById("lastScanAge").textContent =
+        state.lastScan && state.lastScan.timestamp ? formatAge(state.lastScan.timestamp) : "—";
+    }
+
+    function renderBalances(state) {
+      const risk = state.risk || {};
+
+      const dailyEl = document.getElementById("dailyPnl");
+      dailyEl.textContent = safeFixed(risk.dailyPnlXrp, 4) + " XRP";
+      dailyEl.className = "value " + (Number(risk.dailyPnlXrp || 0) >= 0 ? "green" : "red");
+
+      const totalEl = document.getElementById("totalPnl");
+      totalEl.textContent = safeFixed(risk.totalPnlXrp, 4) + " XRP";
+      totalEl.className = "value " + (Number(risk.totalPnlXrp || 0) >= 0 ? "green" : "red");
+
+      document.getElementById("tradesExecuted").textContent = risk.tradesExecuted ?? "—";
+
+      if (state.balance) {
+        const b = state.balance;
+
+        document.getElementById("totalBalance").textContent = safeFixed(b.totalXrp, 4) + " XRP";
+        document.getElementById("availableBalance").textContent = safeFixed(b.availableXrp, 4) + " XRP";
+
+        const explainer = document.getElementById("balanceExplainer");
+
+        if (Number(b.totalXrp) > Number(b.availableXrp)) {
+          explainer.textContent =
+            `Écart normal : ${safeFixed(b.protocolReserveXrp, 2)} XRP bloqués par la réserve obligatoire du protocole XRPL + ` +
+            `${safeFixed(b.safetyBufferXrp, 2)} XRP de marge de sécurité configurée (MIN_XRP_RESERVE_BUFFER). ` +
+            `Ces fonds restent les tiens, juste non engagés dans le trading automatique.`;
+        } else {
+          explainer.textContent = "";
+        }
+      } else {
+        document.getElementById("totalBalance").textContent = "—";
+        document.getElementById("availableBalance").textContent = "—";
+      }
+    }
+
+    function renderLastScan(state) {
+      const lastScanEl = document.getElementById("lastScan");
+
+      if (!state.lastScan || !state.lastScan.timestamp) {
+        lastScanEl.innerHTML = '<div class="empty">En attente de données...</div>';
+        return;
+      }
+
+      const s = state.lastScan;
+      const opp = s.opportunity;
+
+      const cycleHtml = opp && opp.cyclePath
+        ? `<div><strong>Cycle:</strong> <span class="path">${escapeHtml(
+            Array.isArray(opp.cyclePath) ? opp.cyclePath.map(x => shortText(x, 32)).join(" -> ") : opp.cyclePath
+          )}</span></div>`
+        : "";
+
+      lastScanEl.innerHTML = `
+        <div style="padding:10px 0;">
+          <div><strong>Horodatage:</strong> ${escapeHtml(s.timestamp)} <span class="muted">(${formatAge(s.timestamp)})</span></div>
+
+          ${
+            s.skippedReason
+              ? `<div style="color:var(--amber);"><strong>Ignoré:</strong> ${escapeHtml(s.skippedReason)}</div>`
+              : ""
+          }
+
+          ${
+            s.availableXrp !== undefined && s.availableXrp !== null
+              ? `<div><strong>Solde disponible:</strong> ${safeFixed(s.availableXrp, 4)} XRP</div>`
+              : ""
+          }
+
+          ${
+            s.tradeAmountXrp !== undefined && s.tradeAmountXrp !== null
+              ? `<div><strong>Montant testé:</strong> ${safeFixed(s.tradeAmountXrp, 4)} XRP</div>`
+              : ""
+          }
+
+          ${
+            opp
+              ? `<div style="color:var(--green);"><strong>Opportunité:</strong> +${safeFixed(opp.profitPct, 3)}% (+${safeFixed(opp.profitXrp, 6)} XRP)</div>
+                 <div><strong>Source:</strong> ${escapeHtml(opp.source || "—")}</div>
+                 ${cycleHtml}`
+              : `<div style="color:var(--muted);">Aucune opportunité rentable détectée.</div>`
+          }
+        </div>
+      `;
+    }
+
+    function renderWatchlist(state) {
+      const tbody = document.querySelector("#watchlistTable tbody");
+      const filter = document.getElementById("watchlistFilter").value.toLowerCase().trim();
+
+      const watchlist = Array.isArray(state.watchlist) ? state.watchlist : [];
+      const tokens = watchlist.filter((x) => x !== "XRP");
+
+      const filtered = tokens.filter((token) => {
+        if (!filter) return true;
+        return String(token).toLowerCase().includes(filter);
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="empty">Aucun token à afficher.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((token, index) => `
+        <tr>
+          <td class="muted">${index + 1}</td>
+          <td class="mono" title="${escapeHtml(token)}">${escapeHtml(shortText(token, 120))}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderTrades(state) {
+      const tbody = document.querySelector("#tradeTable tbody");
+      const risk = state.risk || {};
+      const history = Array.isArray(risk.tradeHistory) ? risk.tradeHistory : [];
+
+      if (history.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty">Aucun trade encore.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = history.slice().reverse().map((t) => `
+        <tr>
+          <td>${escapeHtml(t.timestamp || "—")}</td>
+          <td style="color:${t.result === "success" ? "var(--green)" : "var(--red)"}">${escapeHtml(t.result || "—")}</td>
+          <td>${t.pnlXrp !== undefined ? safeFixed(t.pnlXrp, 6) : "—"}</td>
+          <td class="mono" title="${escapeHtml(t.hash || "")}">${t.hash ? escapeHtml(shortText(t.hash, 24)) : "—"}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderLogs(state) {
+      const logPanel = document.getElementById("logPanel");
+      const levelFilter = document.getElementById("logLevelFilter").value;
+      const textFilter = document.getElementById("logTextFilter").value.toLowerCase().trim();
+
+      const logs = Array.isArray(state.logs) ? state.logs : [];
+
+      const filtered = logs.filter((log) => {
+        const levelOk = levelFilter === "ALL" || log.level === levelFilter;
+        const text = `${log.timestamp || ""} ${log.level || ""} ${log.msg || ""} ${stringifyMeta(log.meta)}`.toLowerCase();
+        const textOk = !textFilter || text.includes(textFilter);
+        return levelOk && textOk;
+      });
+
+      if (filtered.length === 0) {
+        logPanel.innerHTML = '<div class="empty">Aucun log à afficher.</div>';
+        return;
+      }
+
+      logPanel.innerHTML = filtered.slice().reverse().map((l) => {
+        const meta = stringifyMeta(l.meta);
+
+        return `
+          <div class="log-line ${escapeHtml(l.level || "INFO")}">
+            [${escapeHtml(l.timestamp || "—")}] [${escapeHtml(l.level || "INFO")}] ${escapeHtml(l.msg || "")}${meta ? " " + escapeHtml(meta) : ""}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function copyWatchlist() {
+      const watchlist = lastState && Array.isArray(lastState.watchlist) ? lastState.watchlist : [];
+      navigator.clipboard.writeText(watchlist.join("\n")).catch(() => {});
+    }
+
+    function copyLogs() {
+      if (!lastState || !Array.isArray(lastState.logs)) return;
+
+      const levelFilter = document.getElementById("logLevelFilter").value;
+      const textFilter = document.getElementById("logTextFilter").value.toLowerCase().trim();
+
+      const lines = lastState.logs
+        .filter((log) => {
+          const levelOk = levelFilter === "ALL" || log.level === levelFilter;
+          const text = `${log.timestamp || ""} ${log.level || ""} ${log.msg || ""} ${stringifyMeta(log.meta)}`.toLowerCase();
+          const textOk = !textFilter || text.includes(textFilter);
+          return levelOk && textOk;
+        })
+        .map((l) => `[${l.timestamp}] [${l.level}] ${l.msg}${l.meta ? " " + stringifyMeta(l.meta) : ""}`);
+
+      navigator.clipboard.writeText(lines.join("\n")).catch(() => {});
+    }
+
+    refresh();
+    setInterval(refresh, 3000);
+    setInterval(() => {
+      if (lastState) {
+        document.getElementById("lastScanAge").textContent =
+          lastState.lastScan && lastState.lastScan.timestamp
+            ? formatAge(lastState.lastScan.timestamp)
+            : "—";
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
